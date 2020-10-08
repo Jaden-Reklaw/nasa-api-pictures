@@ -14,7 +14,7 @@ const apiUrl = `https://api.nasa.gov/planetary/apod?api_key=${apiKey}&count=${co
 let resultArray = [];
 let favorites = {};
 
-//
+// Render DOM based on page arg and then create elements for cards
 const createDOMNodes = (page) => {
     const currentArray = page === 'results' ? resultArray : Object.values(favorites);
     console.log('Current Array', page, currentArray);
@@ -43,8 +43,13 @@ const createDOMNodes = (page) => {
         // Save Text
         const saveText = document.createElement('p');
         saveText.classList.add('clickable');
-        saveText.textContent = 'Add to Favorites';
-        saveText.setAttribute('onclick', `saveFavorite('${result.url}')`);
+        if(page === 'results') {
+            saveText.textContent = 'Add to Favorites';
+            saveText.setAttribute('onclick', `saveFavorite('${result.url}')`);
+        } else {
+            saveText.textContent = 'Remove from Favorites';
+            saveText.setAttribute('onclick', `removeFavorite('${result.url}')`);
+        }
         // Card Text
         const cardText = document.createElement('p');
         cardText.textContent = result.explanation;
@@ -67,15 +72,18 @@ const createDOMNodes = (page) => {
     });
 }
 
-// Update the DOM with NASA Cards
+// Update the DOM with NASA Cards if favorites in local storage
 const updateDOM = (page) => {
     // Get Favorites from local storage
     if(localStorage.getItem('nasaFavorites')) {
         favorites = JSON.parse(localStorage.getItem('nasaFavorites'));
         console.log('favorites from local storage', favorites);
     }
+    //Empty image container each time so the elements get refreshed
+    imagesContainer.textContent = '';
     createDOMNodes(page);
 }
+
 // Get 10 images from NASA API
 const getNasaPictures = async () => {
     try {
@@ -102,6 +110,18 @@ const saveFavorite = (itemUrl) => {
             localStorage.setItem('nasaFavorites', JSON.stringify(favorites));
         }
     });
+}
+
+// Remove card from Favorites
+const removeFavorite = (itemUrl) => {
+    //if key exist delete item
+    if(favorites[itemUrl]) {
+        delete favorites[itemUrl];
+    }
+    // Update local storage with current favorites
+    localStorage.setItem('nasaFavorites', JSON.stringify(favorites));
+    //Update the DOM with favorites again
+    updateDOM('favorites');
 }
 
 // On load
