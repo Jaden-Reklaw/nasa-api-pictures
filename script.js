@@ -1,6 +1,6 @@
 // Select DOM elements
-const resultNav = document.getElementById('resultsNav');
-const favoritesNav = document.getElementById('favoritessNav');
+const resultsNav = document.getElementById('resultsNav');
+const favoritesNav = document.getElementById('favoritesNav');
 const imagesContainer = document.querySelector('.images-container');
 const saveConfirmed = document.querySelector('.save-confirmed');
 const loader = document.querySelector('.loader');
@@ -14,10 +14,22 @@ const apiUrl = `https://api.nasa.gov/planetary/apod?api_key=${apiKey}&count=${co
 let resultArray = [];
 let favorites = {};
 
+const showContent = (page) => {
+    //Force to top of page when user clicks on load more
+    window.scrollTo({top: 0, behavior: 'instant'});
+    if(page === 'results') {
+        resultsNav.classList.remove('hidden');
+        favoritesNav.classList.add('hidden');
+    } else {
+        resultsNav.classList.add('hidden');
+        favoritesNav.classList.remove('hidden');
+    }
+    loader.classList.add('hidden');
+}
+
 // Render DOM based on page arg and then create elements for cards
 const createDOMNodes = (page) => {
     const currentArray = page === 'results' ? resultArray : Object.values(favorites);
-    console.log('Current Array', page, currentArray);
     currentArray.forEach((result) => {
         // Card Container
         const card = document.createElement('div');
@@ -77,19 +89,22 @@ const updateDOM = (page) => {
     // Get Favorites from local storage
     if(localStorage.getItem('nasaFavorites')) {
         favorites = JSON.parse(localStorage.getItem('nasaFavorites'));
-        console.log('favorites from local storage', favorites);
     }
     //Empty image container each time so the elements get refreshed
     imagesContainer.textContent = '';
     createDOMNodes(page);
+    // Remove loader here
+    showContent(page);
 }
 
 // Get 10 images from NASA API
 const getNasaPictures = async () => {
+    // Show loader
+    loader.classList.remove('hidden');
     try {
         const respone = await fetch(apiUrl);
         resultArray = await respone.json();
-        updateDOM('favorites');
+        updateDOM('results');
     } catch(error) {
         console.log(error);
     }
